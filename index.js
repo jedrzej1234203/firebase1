@@ -3,10 +3,10 @@ import {
   getDatabase,
   ref,
   push,
-  onValue
+  onValue,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-import { clearValue, addLiElement } from "./functions.js";
+import { clearValue, addLiElement, clearShoppingListEl } from "./functions.js";
 
 const appSettings = {
   databaseURL:
@@ -14,15 +14,21 @@ const appSettings = {
 };
 
 const app = initializeApp(appSettings);
-const database = getDatabase(app);
+export const database = getDatabase(app);
 const shoppingListInDB = ref(database, "ShoppingList");
 
 console.log("dziala");
 
-onValue(shoppingListInDB, (snapshot)=>{
-    let listArray = Object.values(snapshot.val());
-    listArray.forEach((el)=>addLiElement(el));
-})
+onValue(shoppingListInDB, (snapshot) => {
+  if (snapshot.exists()) {
+    let listArray = Object.entries(snapshot.val());
+    clearShoppingListEl();
+    listArray.forEach((el) => addLiElement(el));
+  }
+  else {
+    shoppingList.innerHTML = "No items here.... yet!";
+  }
+});
 
 const addButton = document.getElementById("add-button");
 const elementField = document.getElementById("input-field");
@@ -30,7 +36,8 @@ const shoppingList = document.getElementById("shoppingList");
 
 addButton.addEventListener("click", () => {
   let inputValue = elementField.value;
-  push(shoppingListInDB, inputValue);
-  addLiElement(inputValue);
-  clearValue(elementField);
+  if (inputValue) {
+    push(shoppingListInDB, inputValue);
+    clearValue(elementField);
+  }
 });
